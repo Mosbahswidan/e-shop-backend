@@ -8,7 +8,7 @@ const dataBaseConnection = require("./config/database");
 const apiError = require("./utils/apiError");
 const globalError = require("./mddlewares/errorMiddleware");
 const mountRoutes=require("./routes/index");
-const WebhookCheckout=require("./services/oderServices")
+const {WebhookCheckout}=require("./services/oderServices")
 
 dotenv.config({ path: "config.env" });
 
@@ -21,7 +21,7 @@ app.use(compression());
 app.options("*",cors());
 
 //checkout webhook
-app.post("/webhook-checkout",express.raw({type: 'application/json'}),WebhookCheckout);
+ app.post("/webhook-checkout",express.raw({type: 'application/json'}),WebhookCheckout);
 
 
 app.use(express.json());
