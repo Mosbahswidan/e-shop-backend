@@ -8,6 +8,7 @@ const dataBaseConnection = require("./config/database");
 const apiError = require("./utils/apiError");
 const globalError = require("./mddlewares/errorMiddleware");
 const mountRoutes=require("./routes/index");
+const WebhookCheckout=require("./services/oderServices")
 
 dotenv.config({ path: "config.env" });
 
@@ -18,6 +19,11 @@ const app = express();
 app.use(cors());
 app.use(compression());
 app.options("*",cors());
+
+//checkout webhook
+app.post("/webhook-checkout",express.raw({type: 'application/json'}),WebhookCheckout);
+
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "uploads")));
 if (process.env.NODE_ENV === "development") {

@@ -1,14 +1,15 @@
 
 const stripe=require("stripe")("sk_test_51N19MTJrpscm89imr4RRIJ4tRO51gJV7jbKOKHTIDgGDAfjctForXsGtAG0Ro75D27ODoLP6F7SdZMHMBVqM4xlz00QSH6v8ZW");
+const mongoose = require("mongoose");
 const asyncHandler = require("express-async-handler");
 const factoryHandler = require("./handlersFactory");
 const orderModel = require("../models/orderModel");
 const apiError = require("../utils/apiError");
 const cartModel = require("../models/cartModel");
 const productModel = require("../models/productModel");
-const mongoose = require("mongoose");
+
 const { updateOne } = require("./handlersFactory");
-const { TokenExpiredError } = require("jsonwebtoken");
+
 
 // @desc create cash order
 // @route POST api/v1/orders/cartId
@@ -146,6 +147,21 @@ exports.getChecoutSession=asyncHandler(async(req,res,next)=>{
   });
   res.status(200).json({status:"success",session});
 
+});
+
+exports.WebhookCheckout = asyncHandler(async(req,res,next)=>{
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, 'whsec_u4lG8RKBwSZ7PIjDQVTJveQFv0t2e1TP');
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  if(event.type==="checkout.session.completed"){
+    console.log("create order");
+  }
 });
 
 
