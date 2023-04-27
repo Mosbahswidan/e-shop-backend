@@ -16,7 +16,7 @@ dotenv.config({ path: "config.env" });
 dataBaseConnection();
 
 const app = express();
-//cors and compression
+//cors and compressionk
 app.use(cors());
 app.use(compression());
 app.options("*",cors());
