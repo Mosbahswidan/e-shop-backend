@@ -142,12 +142,17 @@ exports.getChecoutSession=asyncHandler(async(req,res,next)=>{
     success_url: `${req.protocol}://${req.get("host")}/orders`,
     cancel_url: `${req.protocol}://${req.get("host")}/cart`,
     customer_email:req.user.email,
-    client_reference_id:cart._id,
+    client_reference_id:req.params.cartId,
 
   });
   res.status(200).json({status:"success",session});
 
 });
+
+const createCardOrder=(object)=>{
+
+
+};
 
 exports.WebhookCheckout = asyncHandler(async(req,res,next)=>{
   const sig = req.headers['stripe-signature'];
@@ -160,7 +165,7 @@ exports.WebhookCheckout = asyncHandler(async(req,res,next)=>{
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   if(event.type==="checkout.session.completed"){
-    console.log("create order");
+    //createCardOrder(event.data.object);
   }
 });
 
