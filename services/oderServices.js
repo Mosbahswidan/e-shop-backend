@@ -7,6 +7,7 @@ const orderModel = require("../models/orderModel");
 const apiError = require("../utils/apiError");
 const cartModel = require("../models/cartModel");
 const productModel = require("../models/productModel");
+const userModel=require("../models/userModel")
 
 const { updateOne } = require("./handlersFactory");
 
@@ -121,7 +122,6 @@ exports.getChecoutSession=asyncHandler(async(req,res,next)=>{
   const cartPrice=cart.totalPriceAfterDiscount?cart.totalPriceAfterDiscount:cart.totalPrice;
   const totalOrderPrice=cartPrice+taxPrice+shippingPrice;
 
-  const items =cart.cartItems;
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -149,9 +149,34 @@ exports.getChecoutSession=asyncHandler(async(req,res,next)=>{
 
 });
 
-const createCardOrder=(object)=>{
-
-
+const createCardOrder=async(object)=>{
+  const cartId=object.client_reference_id;
+  const price=object.amount_total/100;
+ const cart =await cartModel.findById(cartId);
+ const user=await userModel.findOne({email:object.customer_email});
+ //create order
+ const order=await orderModel.create({
+  user:user._id,
+  cartItems:cart.cartItems,
+   totalOrderPrice:price,
+   isPayed:true,
+   paidAt:Date.now(),
+   paymentMethodType:"card",
+ });
+ if(order){
+  const bulkOptions=cart.cartItems.map((item)=>({
+    updateOne:{
+      filter:{
+        _id:item.product
+      },
+      update:{
+        $inc:{quantity: -item.quantity,sold:+item.quantity}
+      }
+    }
+  }));
+  await  productModel.bulkWrite(bulkOptions,{});
+  await cartModel.findByIdAndDelete(cartId);
+}
 };
 
 exports.WebhookCheckout = asyncHandler(async(req,res,next)=>{
@@ -165,8 +190,9 @@ exports.WebhookCheckout = asyncHandler(async(req,res,next)=>{
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   if(event.type==="checkout.session.completed"){
-    //createCardOrder(event.data.object);
+    createCardOrder(event.data.object);
   }
+  res.status(200).json({recived:true});
 });
 
 
