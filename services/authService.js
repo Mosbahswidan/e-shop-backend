@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const apiError = require("../utils/apiError");
 const UserModel = require("../models/userModel");
 const sendEmail = require("../utils/sendEmail");
-const emailText=require("../utils/emailText");
+const emailText = require("../utils/emailText");
 
 // @desc signup
 // @route GET api/v1/auth/signup
@@ -89,7 +89,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
 // @desc permission
 exports.allowedTo = (...roles) =>
   asyncHandler(async (req, res, next) => {
-    if (!(roles.includes(req.user.role))) {
+    if (!roles.includes(req.user.role)) {
       return next(
         // eslint-disable-next-line new-cap
         new apiError("You are not allowed to access this route", 403)
@@ -118,25 +118,25 @@ exports.forgetPassword = asyncHandler(async (req, res, next) => {
   user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
   user.passwordResetVerfied = false;
   await user.save();
- // const msg = `Hi ${user.name}\n we recoverd a request to reset your account password\n your reset password is: ${resetCode} `;
- const msg=emailText({
-  name:user.name,
-  email:user.email,
-  resetCode:resetCode,
- });
-  try{
+  // const msg = `Hi ${user.name}\n we recoverd a request to reset your account password\n your reset password is: ${resetCode} `;
+  const msg = emailText({
+    name: user.name,
+    email: user.email,
+    resetCode: resetCode,
+  });
+  try {
     await sendEmail({
       email: user.email,
       subject: "Your password reset code (valid for 10 min)",
       message: msg,
     });
-  }catch(err){
+  } catch (err) {
     user.passwordResetCode = undefined;
     user.passwordResetExpires = undefined;
     user.passwordResetVerfied = undefined;
     await user.save();
     // eslint-disable-next-line new-cap
-    return next(new apiError("error in sending mail",500));
+    return next(new apiError(`error in sending mail:${err}`, 500));
   }
   res.status(200).json({
     status: "success",
@@ -147,29 +147,29 @@ exports.forgetPassword = asyncHandler(async (req, res, next) => {
 // @route GET api/v1/auth/verifyResetCode
 // @access public
 
-exports.verifyResetCode = asyncHandler(async(req,res,next)=>{
+exports.verifyResetCode = asyncHandler(async (req, res, next) => {
   //1- get user by his reset code
   const hashedResetCode = crypto
     .createHash("sha256")
     .update(req.body.resetCode)
     .digest("hex");
 
-   const user= await UserModel.findOne({email:req.body.email});
-   if(!user){
+  const user = await UserModel.findOne({ email: req.body.email });
+  if (!user) {
     // eslint-disable-next-line new-cap
-    return next(new apiError("the email is invalid",401));
-   }
-   if(!(user.passwordResetCode===hashedResetCode)){
+    return next(new apiError("the email is invalid", 401));
+  }
+  if (!(user.passwordResetCode === hashedResetCode)) {
     // eslint-disable-next-line new-cap
-    return next(new apiError("the reset code is incorrect",401));
-   }
-   if(user.passwordResetExpires<Date.now()){
+    return next(new apiError("the reset code is incorrect", 401));
+  }
+  if (user.passwordResetExpires < Date.now()) {
     // eslint-disable-next-line new-cap
-    return next(new apiError("the reset code is invalid",401));
-   }
-   user.passwordResetVerfied=true;
-   await user.save();
-   res.status(200).json({
+    return next(new apiError("the reset code is invalid", 401));
+  }
+  user.passwordResetVerfied = true;
+  await user.save();
+  res.status(200).json({
     status: "success",
     //message: "Success sending reset password to your email",
   });
@@ -178,30 +178,30 @@ exports.verifyResetCode = asyncHandler(async(req,res,next)=>{
 // @route GET api/v1/auth/resetPassword
 // @access public
 
-exports.resetPassword = asyncHandler(async(req,res,next)=>{
- const user =await UserModel.findOne({email:req.body.email});
- if(!user){
-  // eslint-disable-next-line new-cap
-  return next(new apiError("there is no user exist for this email",404));
- }
- if(!user.passwordResetVerfied){
-  // eslint-disable-next-line new-cap
-  return next(new apiError("the reset password not verified",400));
- }
- user.password=req.body.newPassword;
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  const user = await UserModel.findOne({ email: req.body.email });
+  if (!user) {
+    // eslint-disable-next-line new-cap
+    return next(new apiError("there is no user exist for this email", 404));
+  }
+  if (!user.passwordResetVerfied) {
+    // eslint-disable-next-line new-cap
+    return next(new apiError("the reset password not verified", 400));
+  }
+  user.password = req.body.newPassword;
 
- user.passwordResetCode = undefined;
- user.passwordResetExpires = undefined;
- user.passwordResetVerfied = undefined;
- await user.save();
+  user.passwordResetCode = undefined;
+  user.passwordResetExpires = undefined;
+  user.passwordResetVerfied = undefined;
+  await user.save();
 
- const token = await jwt.sign(
-  { userId: user._id },
-  process.env.JWT_SECRET_KEY,
-  { expiresIn: "90d" }
-);
-res.status(200).json({
-  status: "success",
-  token
-});
+  const token = await jwt.sign(
+    { userId: user._id },
+    process.env.JWT_SECRET_KEY,
+    { expiresIn: "90d" }
+  );
+  res.status(200).json({
+    status: "success",
+    token,
+  });
 });
