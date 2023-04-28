@@ -17,20 +17,17 @@ const {
 //mergeParams allow us to access params of another routes
 const router = express.Router();
 const authService = require("../services/authService");
-const reviewsRoute=require("./reviewsRoute");
+const reviewsRoute = require("./reviewsRoute");
 //nested route
 router.use("/:productId/reviews", reviewsRoute);
-router
-  .route("/")
-  .get(getProducts)
-  .post(
-    authService.protect,
-    authService.allowedTo("admin"),
-    uploadProductImages,
-    resizeProductImages,
-    createProductValidator,
-    createProduct
-  );
+router.route("/").get(getProducts).post(
+  authService.protect,
+  authService.allowedTo("admin"),
+  uploadProductImages,
+  resizeProductImages,
+   createProductValidator,
+  createProduct
+);
 
 router
   .route("/:id")
