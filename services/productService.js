@@ -47,8 +47,8 @@ exports.resizeProductImages = asyncHandler(async (req, res, next) => {
         req.body.images.push(fileName);
       })
     );
-    next();
   }
+  next();
 });
 // @desc get all products
 // @route GET api/v1/products
@@ -60,7 +60,7 @@ exports.getProducts = factoryHandler.getAll(ProductModel);
 // @route GET api/v1/products/:id
 // @access public
 
-exports.getProduct = factoryHandler.getOne(ProductModel,"reviews");
+exports.getProduct = factoryHandler.getOne(ProductModel, "reviews");
 
 // @desc create a new product
 // @route POST api/v1/products
